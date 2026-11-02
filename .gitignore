@@ -5,3 +5,4 @@ __pycache__/
 backend/app/uploads/*
 !backend/app/uploads/.gitkeep
 push.sh
+context
