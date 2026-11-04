@@ -128,15 +128,16 @@ def search_users(request: Request, q: str = ""):
     if user["role"] not in ["admin", "teacher", "ta"]:
         return RedirectResponse("/dashboard", status_code=302)
 
-    sql = f"SELECT id, email, full_name, role FROM users WHERE email ILIKE '%{q}%' OR full_name ILIKE '%{q}%'"
-    conn = get_conn()
-    try:
-        with conn.cursor() as cur:
-            cur.execute(sql)
-            rows = cur.fetchall()
-            cols = [d[0] for d in cur.description]
-            users = [dict(zip(cols, r)) for r in rows]
-    finally:
-        conn.close()
+    sql = """
+        SELECT id, email, full_name, role
+        FROM users
+        WHERE email ILIKE %s OR full_name ILIKE %s
+    """
 
-    return templates.TemplateResponse("admin_users.html", {"request": request, "user": user, "users": users, "q": q})
+    params = (f"%{q}%", f"%{q}%")
+    users = run_query(sql, params=params, fetchall=True)
+
+    return templates.TemplateResponse(
+        "admin_users.html",
+        {"request": request, "user": user, "users": users, "q": q}
+    )
