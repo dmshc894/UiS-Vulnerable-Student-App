@@ -1,10 +1,10 @@
 import traceback
-import requests
 from fastapi import APIRouter, Request, Form
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from app.auth import get_user_from_session
 from app.config import APP_ENV
+from .safe_fetch import fetch_public_resource, RessourceFetchError
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -29,15 +29,17 @@ def import_resource_get(request: Request, url: str = ""):
     user = get_user_from_session(request)
     body = ""
     error = ""
+    status_code = 200
     if url:
         try:
-            r = requests.get(url, timeout=5)
-            body = r.text[:2000]
-        except Exception as exc:
+            body = fetch_public_resource(url)
+        except RessourceFetchError as exc:
             error = str(exc)
+            status_code = 400
     return templates.TemplateResponse(
         "resource_import.html",
         {"request": request, "user": user, "body": body, "url": url, "error": error},
+        status_code = status_code,
     )
 
 
